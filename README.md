@@ -1,2 +1,16 @@
-# shansing-passwords-v2
-A solution for memorable independent passwords (based on FlowerPassword)
+闪星花密v2 基于[花密](https://flowerpassword.com/app/web)，为用户提供可记忆的独立密码解决方案。
+
+闪星花密v2 沿袭原版花密的“记忆密码＋区分代号”模式。不同之处在于，最终密码总是带有特殊符号，以及哈希函数 SHA256 取代了不安全的 MD5。并且，与其他花密*修改版*不同，闪星花密v2 的最终密码包含大小写字母、特殊符号，这些字符（除第一位外）并非*强行*指定，而是用以表达哈希值，所以生成的密码在表面上、事实上都更强壮。
+
+| 比较项 | 花密 | 闪星花密v2 |
+| :----: | :----: | :----: |
+| 核心算法 | HMAC-MD5 | HMAC-SHA256 |
+| 首字符类型 | 字母`AaBbCcDdEeFfK` | 特殊符号`!@#$%` |
+| 允许的非首字符 | `AaBbCcDdEeFf`和所有数字 | 所有大小写字母和数字，和符号`/\`
+| log2(组合数)\* | ≈70.6 | ≈92.3 |
+
+在线试用：[闪星花密 网页版](https://shansing.com/passwords/) （勾选“使用闪星花密v2算法”）
+
+参考阅读：[《闪星花密v2：对花密的试改进》](https://shansing.com/read/477/)
+
+注：与原版花密一样，闪星花密v2 提供**扩展长度**密码，但**不**建议一般用户使用。详见[上文评论区](https://shansing.com/read/477/comment-page-1#comment-8544)。

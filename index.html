@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>闪星花密 网页版 - 闪星空间</title>
+    <link href="./style.css?ver=19022801" rel="stylesheet">
+	<!-- Google Analytics when DNT!=1 -->
+  </head>
+<body>
+	<div class="container langzh">
+	
+		<header>
+			<h1><a href="https://shansing.com/passwords/">闪星花密</a></h1>
+		</header>
+		
+		<div id="content">
+			<h2><span>1</span>输入</h2>
+			<div id="input">
+				<label for="password">记忆密码</label><input id="password" name="password" type="password" value="" tabindex="1" />
+				<br>
+				<label for="key">区分代号</label><input id="key" name="key" type="text" value="" tabindex="2"/>
+			</div>
+			<h2><span>2</span>获取</h2>
+			<div id="get">
+				<p>最终密码<span id="code16" class="code16d">&nbsp;</span><span id="copycode16" class="copycode16d">点击复制</span><span id="copyOK">&radic; 复制成功</span></p>
+			</div>
+		</div>
+
+		<div id="tip">
+			<p>· 记忆密码：选择一个与个人信息无关的密码，防止社会工程学破解。<br>· 区分代号：用于区别不同用途密码的简短代号，如淘宝账号可用“taobao”或“tb”等。</p>
+		</div>
+
+	<footer>
+		<div id="opt">
+			<label><input type="checkbox" id="hidopt" checked> 隐藏部分最终密码</label><br>
+			<label><input type="checkbox" id="cpyexopt"> 复制扩展长度的最终密码 (高级)</label><br>
+			<label><input type="checkbox" id="v2opt"> 使用闪星花密v2算法 (<a href="https://shansing.com/read/477/" target="_blank" title="闪星花密v2：对花密的试改进">测试中</a>)</label>
+		</div>
+		<p>Copyright © 2019 闪星花密 基于<a href="https://flowerpassword.com" target="_blank">花密</a>项目。 &nbsp;<a href="https://shansing.space/passwords/" class="langswitch">English</a><br>闪星花密是第三方的<a href="https://shansing.com/read/199/" target="_blank">花密</a>网页版。长久维护 HTTPS，采用现代剪贴板 API，更少跟踪代码。 &nbsp;<a href="https://shansing.com/guestbook/" target="_blank">留言</a></p>
+	</footer>
+
+	</div>
+
+	<script src="./md5.js"></script>
+	<script src="./sha256.js"></script>
+	<script>
+		var copyval = '';
+		var copyex = '';
+		var optSavable = false;
+
+		function setCopyVar(val, ex) {
+			if (ex === copyex) return;
+
+			copyval = val;
+			copyex = ex;
+
+			updateByHidopt();
+			hideCopyOk();
+		}
+
+		function updateByHidopt() {
+			if (copyval) {
+				document.getElementById('code16').innerHTML = document.getElementById('hidopt').checked ? copyval.slice(0, 3) + '**********' + copyval.slice(13, 16) : copyval;
+			} else {
+				document.getElementById('code16').innerHTML = '&nbsp;';
+			}
+		}
+
+		function countCode() {
+			var password = document.getElementById('password').value;
+			var key = document.getElementById('key').value;
+			if (password && key) {
+				if (document.getElementById('v2opt').checked) {
+					countV2(password, key);
+				} else {
+					countV1(password, key);
+				}
+			} else {
+				setCopyVar('', '');
+			}
+		}
+
+		function countV1(password, key) { // By: KiseXu
+			var str = '01279abe' //sunlovesnow1990090127xykab
+
+			var md5one = md5(password, key);
+			var md5two = md5(md5one, 'snow');
+			var md5three = md5(md5one, 'kise');
+			
+			var rule = md5three.split('');
+			var source = md5two.split('');
+			for (var i=0; i<=31; i++) { 
+				if (isNaN(source[i])) {
+					if (str.search(rule[i]) !== -1) {
+						source[i] = source[i].toUpperCase();
+					}
+				}
+			}
+			var code32 = source.join('');
+			if (isNaN(source[0])) {
+				var code16 = code32.slice(0, 16);
+			}else{
+				var code16 = 'K' + code32.slice(1, 16);
+			}
+
+			setCopyVar(code16, code32);
+		}
+
+		function countV2(password, key) { // By: Shansing
+			var symbol = "!@#$%!@#$%!@#$%!@#$%!@#$%!@#$%";
+			var head, hash, code40, code16;
+			hash = sha256.hmac(key, password);
+			hash = sha256.hmac.update("ShansingPv2", hash).array();
+			code40 = hash.slice(0, 30);
+			code40 = btoa(String.fromCharCode.apply(null, code40));
+			head = code40.charCodeAt(0);
+			if (head >= 65 && head <= 90) head = symbol[head-65];
+			else if (head >= 97 && head <= 122) head = symbol[head-97];
+			else if (head >= 48 && head <= 57) head = symbol[head-47];  //-48+1, history issue
+			else if (head === 43) head = symbol[3]; // + -> $
+			else if (head === 47) head = symbol[4]; // / -> %
+			code40 = head + code40.slice(1).replace(/\+/g, "/").replace(/\//g, "\\");
+			code16 = code40.slice(0, 16);
+
+			setCopyVar(code16, code40);
+		}
+
+		function hideCopyOk() {
+			document.getElementById('copyOK').style.color = '#f2f2f2';
+		}
+
+		setTimeout(function() {
+			optSavable = storageAvailable('localStorage');
+			if (!optSavable) {
+				console.log('LocalStorage is not supported by your browser, so options will not be saved.');
+			}
+
+			loadOpt('hidopt');
+			loadOpt('v2opt');
+			loadOpt('cpyexopt');
+
+			document.getElementById('password').onchange = countCode;
+			document.getElementById('key').onchange = countCode;
+			document.getElementById('password').onkeyup = countCode;
+			document.getElementById('key').onkeyup = countCode;
+			document.getElementById('hidopt').onchange = function () {
+				updateByHidopt();
+				saveOpt('hidopt');
+			}
+			document.getElementById('v2opt').onchange = function () {
+				countCode();
+				saveOpt('v2opt');
+			}
+			document.getElementById('cpyexopt').onchange = function () {
+				hideCopyOk();
+				saveOpt('cpyexopt');
+			};
+			document.getElementById('copycode16').onclick = function() {
+				if (!copyex) return;
+				document.addEventListener('copy', copy);
+				document.execCommand('copy');
+				document.removeEventListener('copy', copy);
+			};
+			
+		}, 0);
+
+		function copy(e) {
+			try {
+				e.preventDefault();
+				e.clipboardData.setData('text/plain', document.getElementById('cpyexopt').checked ? copyex : copyval);
+				document.getElementById('copyOK').style.color = '#00985d';
+			} catch (err) {
+				console.log(err);
+				document.getElementById('copyOK').innerHTML = '浏览器不支持，请手动复制。';
+				document.getElementById('copyOK').style.color = '#e61e27';
+			}
+		}
+
+		function saveOpt(id) {
+			if (!optSavable) return;
+
+			localStorage.setItem('Passwords-'+id, document.getElementById(id).checked ? '1' : '');
+		}
+
+		function loadOpt(id) {
+			if (!optSavable) return;
+
+			var value = localStorage.getItem('Passwords-'+id);
+			if (value === null) return;
+			document.getElementById(id).checked = !!value;
+		}
+
+		// ref: https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API
+		function storageAvailable(type) {
+			var storage;
+			try {
+				storage = window[type];
+				var x = '__storage_test__';
+				storage.setItem(x, x);
+				storage.removeItem(x);
+				return true;
+			}
+			catch(e) {
+				return e instanceof DOMException && (
+					// everything except Firefox
+					e.code === 22 ||
+					// Firefox
+					e.code === 1014 ||
+					// test name field too, because code might not be present
+					// everything except Firefox
+					e.name === 'QuotaExceededError' ||
+					// Firefox
+					e.name === 'NS_ERROR_DOM_QUOTA_REACHED') &&
+					// acknowledge QuotaExceededError only if there's something already stored
+					(storage && storage.length !== 0);
+			}
+		}
+	</script>
+	</body>
+</html>
